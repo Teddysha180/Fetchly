@@ -2312,6 +2312,126 @@
     </div>
   </div>
 
+  <!-- ══ FETCHLY APP UPDATE POPUP ══ -->
+  <div id="fetchlyUpdatePopup" style="display:none" aria-modal="true" role="dialog" aria-label="Fetchly update available">
+    <div class="upd-backdrop" onclick="dismissFetchlyUpdate()"></div>
+    <div class="fupd-card" id="fetchlyUpdCard">
+      <div class="fupd-glow"></div>
+
+      <!-- Icon -->
+      <div class="upd-icon-wrap">
+        <div class="fupd-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="upd-eyebrow" style="color:#7C6BFF">FETCHLY UPDATE AVAILABLE</div>
+      <div class="upd-title">v<span id="fUpdLatestVer">—</span> is ready</div>
+      <div class="upd-body" id="fUpdBody">A new version of Fetchly is available. Update now to get the latest features and improvements.</div>
+
+      <!-- Changelog -->
+      <div class="fupd-changelog" id="fUpdChangelog"></div>
+
+      <!-- Version diff -->
+      <div class="upd-ver-row">
+        <div class="upd-ver-chip current"><span class="upd-ver-lbl">Installed</span><span id="fUpdCurrentVer">—</span></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.8" stroke-linecap="round" style="width:14px;height:14px;flex-shrink:0">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+        <div class="upd-ver-chip" style="background:rgba(124,107,255,0.12);border:1px solid rgba(124,107,255,0.28)"><span class="upd-ver-lbl">Latest</span><span id="fUpdLatestVerChip" style="color:#b8adff">—</span></div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="upd-progress" id="fUpdProgress" style="display:none">
+        <div class="upd-prog-track"><div class="upd-prog-fill" id="fUpdProgFill" style="background:linear-gradient(90deg,#7C6BFF,#b8adff)"></div></div>
+        <div class="upd-prog-label" id="fUpdProgLabel">Preparing update…</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="upd-actions" id="fUpdActions">
+        <button class="fupd-btn-primary" id="fUpdNowBtn" onclick="installFetchlyUpdate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          Update Now
+        </button>
+        <button class="upd-btn-secondary" onclick="dismissFetchlyUpdate()">Later</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ══ FETCHLY APP UPDATE POPUP ══ */
+    #fetchlyUpdatePopup {
+      position: fixed; inset: 0; z-index: 10001;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #fetchlyUpdatePopup.open { display: flex !important; }
+    .fupd-card {
+      position: relative; z-index: 1;
+      width: 440px; max-width: calc(100vw - 40px);
+      background: #0a0b12;
+      border: 1px solid rgba(124,107,255,0.22);
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0; text-align: center;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(124,107,255,0.06) inset;
+      animation: upd-slide-in .38s cubic-bezier(.22,1,.36,1) both;
+      overflow: hidden;
+    }
+    .fupd-card::before {
+      content: '';
+      position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+      background: linear-gradient(90deg, transparent, #7C6BFF, #b8adff, #7C6BFF, transparent);
+    }
+    .fupd-glow {
+      position: absolute; top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 320px; height: 220px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,107,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .fupd-icon {
+      width: 64px; height: 64px; border-radius: 20px;
+      background: rgba(124,107,255,0.14);
+      border: 1px solid rgba(124,107,255,0.32);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 8px rgba(124,107,255,0.06), 0 0 0 16px rgba(124,107,255,0.02);
+    }
+    .fupd-icon svg { width: 26px; height: 26px; stroke: #7C6BFF; }
+    .fupd-changelog {
+      width: 100%; padding: 10px 14px; margin-bottom: 20px;
+      background: rgba(124,107,255,0.07);
+      border: 1px solid rgba(124,107,255,0.14);
+      border-radius: 10px;
+      font-size: 11.5px; color: rgba(255,255,255,0.45);
+      line-height: 1.6; text-align: left;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      display: none;
+    }
+    .fupd-changelog.visible { display: block; }
+    .fupd-btn-primary {
+      display: flex; align-items: center; gap: 8px;
+      padding: 13px 24px; border-radius: 12px; border: none;
+      background: linear-gradient(180deg, #7C6BFF 0%, #5a4bcc 100%);
+      color: #fff; font-size: 14px; font-weight: 600;
+      cursor: pointer; letter-spacing: -0.01em;
+      box-shadow: 0 4px 20px rgba(124,107,255,0.40);
+      transition: opacity .15s, transform .15s;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .fupd-btn-primary:hover:not(:disabled) { opacity:.9; transform:translateY(-1px); }
+    .fupd-btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  </style>
+
   <style>
     /* ══ UPDATE POPUP ══ */
     #updatePopup {
@@ -2580,6 +2700,7 @@
         window.pywebview?.api?.get_default_folder?.().then(f => { if (f) id('savePath').textContent = f; });
       }
       setTimeout(checkAppUpdates, 2000);
+      setTimeout(checkFetchlyUpdate, 4000);
     });
 
     function checkAppUpdates() {
@@ -2613,6 +2734,95 @@
           requestAnimationFrame(() => popup.classList.add('open'));
         }
       }).catch(() => {}); // silent fail — update check is non-critical
+    }
+
+    /* ── Fetchly App Auto-Update ───────────────────────────── */
+    function checkFetchlyUpdate() {
+      if (!window.pywebview?.api?.check_fetchly_update) return;
+      window.pywebview.api.check_fetchly_update().then(res => {
+        if (!res || res.status !== 'ok') return;
+        if (!res.update_available) return;
+
+        // Don't show if user already dismissed this version
+        try {
+          if (sessionStorage.getItem('fetchly_upd_dismissed') === res.latest_version) return;
+        } catch(e) {}
+
+        id('fUpdCurrentVer').textContent    = res.current_version  || '—';
+        id('fUpdLatestVer').textContent     = res.latest_version   || '—';
+        id('fUpdLatestVerChip').textContent = res.latest_version   || '—';
+
+        if (res.changelog) {
+          const cl = id('fUpdChangelog');
+          cl.textContent = '📝 ' + res.changelog;
+          cl.classList.add('visible');
+        }
+
+        const popup = id('fetchlyUpdatePopup');
+        popup.style.display = 'flex';
+        requestAnimationFrame(() => popup.classList.add('open'));
+      }).catch(() => {});
+    }
+
+    function dismissFetchlyUpdate() {
+      const popup = id('fetchlyUpdatePopup');
+      const card  = id('fetchlyUpdCard');
+      try {
+        const v = id('fUpdLatestVer')?.textContent;
+        if (v && v !== '—') sessionStorage.setItem('fetchly_upd_dismissed', v);
+      } catch(e) {}
+      if (card) {
+        card.style.transition = 'opacity .2s ease, transform .22s ease';
+        card.style.opacity    = '0';
+        card.style.transform  = 'translateY(16px) scale(0.96)';
+      }
+      setTimeout(() => { popup.style.display = 'none'; popup.classList.remove('open'); }, 240);
+    }
+
+    function installFetchlyUpdate() {
+      if (!window.pywebview?.api?.install_fetchly_update) return;
+
+      const btn   = id('fUpdNowBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin" style="font-size:15px">&#8635;</span> Updating…';
+      id('fUpdActions').querySelector('.upd-btn-secondary').style.display = 'none';
+      id('fUpdProgress').style.display = 'block';
+      id('fUpdBody').textContent = 'Downloading update from GitHub…';
+
+      window.pywebview.api.install_fetchly_update().catch(() => onFetchlyUpdateDone(false));
+    }
+
+    /* Called from Python bridge: onFetchlyUpdateProgress(pct, msg) */
+    function onFetchlyUpdateProgress(pct, msg) {
+      const fill  = id('fUpdProgFill');
+      const label = id('fUpdProgLabel');
+      if (fill)  fill.style.width   = Math.max(0, Math.min(100, pct)) + '%';
+      if (label) label.textContent  = msg || 'Updating…';
+      if (pct >= 100) id('fUpdBody').textContent = 'Restarting Fetchly…';
+    }
+
+    /* Called from Python bridge: onFetchlyUpdateDone(success) */
+    function onFetchlyUpdateDone(success) {
+      const fill  = id('fUpdProgFill');
+      const label = id('fUpdProgLabel');
+      if (fill) {
+        fill.style.width      = '100%';
+        fill.style.background = success
+          ? 'linear-gradient(90deg,#30D158,#4ADE80)'
+          : 'linear-gradient(90deg,#FF453A,#FF6B6B)';
+      }
+      if (success) {
+        if (label) { label.textContent = 'Restarting Fetchly…'; label.style.color = '#30D158'; }
+        id('fUpdBody').textContent = 'Update installed! Fetchly will restart automatically.';
+        showToast('Fetchly updated! Restarting…', 'info');
+      } else {
+        if (label) { label.textContent = 'Update failed. Try again later.'; label.style.color = '#FF453A'; }
+        const btn = id('fUpdNowBtn');
+        btn.disabled = false; btn.innerHTML = 'Retry';
+        btn.onclick = () => installFetchlyUpdate();
+        id('fUpdActions').querySelector('.upd-btn-secondary').style.display = '';
+        showToast('Fetchly update failed', 'error');
+      }
     }
 
     function dismissUpdate() {

@@ -14,6 +14,7 @@ from downloader_engine import (
     DownloadCancelled, DownloaderEngine, detect_platform,
     auto_update_ytdlp
 )
+from updater import FetchlyUpdater
 
 
 # ─────────────────────────────────────────────
@@ -384,6 +385,50 @@ class FetchlyAPI:
         t = threading.Thread(target=_worker, daemon=True)
         t.start()
         return {"status": "ok", "message": "Upgrade started in background"}
+
+    # ── Fetchly App Self-Update ────────────────
+    def check_fetchly_update(self) -> dict:
+        """
+        Check GitHub for a new Fetchly version.
+        Returns {status, current_version, latest_version, update_available, changelog}.
+        Called from JS on startup — runs in a background thread so the UI never blocks.
+        """
+        try:
+            updater = FetchlyUpdater()
+            return updater.check()
+        except Exception as ex:
+            return {"status": "error", "error": str(ex),
+                    "update_available": False, "current_version": "?",
+                    "latest_version": "?", "changelog": ""}
+
+    def install_fetchly_update(self) -> dict:
+        """
+        Download and apply the latest Fetchly update from GitHub.
+        Progress is streamed to the UI via onFetchlyUpdateProgress(pct, msg).
+        When done, calls onFetchlyUpdateDone(success) then restarts the app.
+        """
+        def _progress(pct: int, msg: str) -> None:
+            if self.window:
+                try:
+                    self.window.evaluate_js(
+                        f"onFetchlyUpdateProgress({pct}, {json.dumps(msg)})"
+                    )
+                except Exception:
+                    pass
+
+        def _done(success: bool, msg: str) -> None:
+            safe_print(f"[Fetchly Updater] done={success} msg={msg}")
+            if self.window:
+                try:
+                    self.window.evaluate_js(
+                        f"onFetchlyUpdateDone({json.dumps(success)})"
+                    )
+                except Exception:
+                    pass
+
+        updater = FetchlyUpdater(progress_cb=_progress)
+        updater.install(on_done=_done)
+        return {"status": "ok", "message": "Update started in background"}
 
 
 
