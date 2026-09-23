@@ -1,0 +1,44 @@
+# ── Python ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# ── Virtual environments ──────────────────────────
+.venv/
+venv/
+env/
+.env
+
+# ── PyInstaller build output ──────────────────────
+build/
+dist/
+*.spec
+
+# ── Backup / scratch files ────────────────────────
+*.bak
+*.pre_gold_bak
+mediavault_v9.html
+mediavault_v9.html.bak
+mediavault_v9.html.pre_gold_bak
+
+# ── Dev / generator scripts (not part of app) ─────
+add_splash.py
+apply_gold.py
+test_formats.py
+
+# ── IDE & tool metadata ───────────────────────────
+.sixth/
+.zencoder/
+.zenflow/
+.agents/
+.gemini/
+
+# ── OS artefacts ──────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Git housekeeping ──────────────────────────────
+.gitkeep
