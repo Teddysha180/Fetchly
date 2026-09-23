@@ -16,6 +16,15 @@ build/
 dist/
 *.spec
 
+# ── Installer output (ship via GitHub Releases) ───
+Fetchly-Setup-*.exe
+fetchly.ico
+fetchly_icon.png
+version_info.txt
+make_icon.py
+build.py
+installer.nsi
+
 # ── Backup / scratch files ────────────────────────
 *.bak
 *.pre_gold_bak
