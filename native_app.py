@@ -18,6 +18,22 @@ from updater import FetchlyUpdater
 
 
 # ─────────────────────────────────────────────
+#  RESOURCE PATH (dev + PyInstaller EXE)
+# ─────────────────────────────────────────────
+def _resource_path(relative: str) -> str:
+    """
+    Resolve a path to a bundled asset.
+    - Dev mode  : relative to this file's directory
+    - PyInstaller: relative to sys._MEIPASS (the temp extraction folder)
+    """
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, relative)
+
+
+# ─────────────────────────────────────────────
 #  UTILITIES
 # ─────────────────────────────────────────────
 def safe_print(msg: str) -> None:
@@ -437,8 +453,8 @@ class FetchlyAPI:
 #  ENTRY POINT
 # ─────────────────────────────────────────────
 def main():
-    api      = FetchlyAPI()
-    html_path = os.path.abspath("fetchly.html")
+    api       = FetchlyAPI()
+    html_path = _resource_path("fetchly.html")
     url       = f"file:///{html_path.replace(os.sep, '/')}"
 
     window = webview.create_window(

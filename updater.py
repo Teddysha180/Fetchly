@@ -52,7 +52,14 @@ SKIP_PATHS = {
 }
 
 # The version.json file in the local install
-LOCAL_VERSION_FILE = Path(__file__).parent / "version.json"
+# When frozen by PyInstaller, sys._MEIPASS holds the bundle dir;
+# otherwise fall back to the directory of this file.
+def _app_base() -> Path:
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent
+
+LOCAL_VERSION_FILE = _app_base() / "version.json"
 
 # ─────────────────────────────────────────────
 #  SEMVER COMPARE
@@ -293,19 +300,23 @@ def _copy_update(source_root: Path, dest_root: Path) -> None:
 # ─────────────────────────────────────────────
 
 def _restart_app() -> None:
-    """Replace the current process with a fresh Python process running main.py."""
-    main_py = str(Path(__file__).parent / "main.py")
+    """Restart the app after an update."""
+    # For PyInstaller frozen EXE, re-launch sys.executable (the EXE itself)
+    # For dev (script) mode, re-launch python main.py
     try:
-        if sys.platform == "win32":
+        if getattr(sys, 'frozen', False):
+            # Running as compiled EXE — relaunch the EXE
+            exe = sys.executable
             import subprocess
-            subprocess.Popen(
-                [sys.executable, main_py],
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
-            )
+            subprocess.Popen([exe], creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == 'win32' else 0)
         else:
-            os.execv(sys.executable, [sys.executable, main_py])
+            main_py = str(Path(__file__).parent / "main.py")
+            if sys.platform == "win32":
+                import subprocess
+                subprocess.Popen([sys.executable, main_py], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                os.execv(sys.executable, [sys.executable, main_py])
     except Exception:
         pass
     finally:
-        # Terminate the current process
         os._exit(0)
