@@ -209,6 +209,10 @@ def auto_update_ytdlp(progress_callback=None) -> bool:
         if now - _ytdlp_last_updated < 300:   # 5-minute cool-down
             return False
 
+        if getattr(sys, 'frozen', False):
+            print("[*] Running inside PyInstaller bundle; in-process pip upgrade disabled.")
+            return False
+
         if progress_callback:
             progress_callback(0, "—", "yt-dlp API expired — upgrading yt-dlp…")
 
@@ -285,6 +289,8 @@ def get_ytdlp_common_opts() -> dict:
     node_path = find_node()
     if node_path:
         opts["js_runtimes"] = {"node": {"path": node_path}}
+    else:
+        opts["js_runtimes"] = {"node": {}}
     return opts
 
 

@@ -452,6 +452,33 @@ class FetchlyAPI:
 # ─────────────────────────────────────────────
 #  ENTRY POINT
 # ─────────────────────────────────────────────
+def _apply_window_icon():
+    if sys.platform != "win32":
+        return
+    import ctypes
+    for _ in range(25):
+        time.sleep(0.25)
+        try:
+            hwnd = ctypes.windll.user32.FindWindowW(None, "Fetchly")
+            if hwnd:
+                ico_path = _resource_path("fetchly.ico")
+                if os.path.exists(ico_path):
+                    IMAGE_ICON = 1
+                    LR_LOADFROMFILE = 0x00000010
+                    WM_SETICON = 0x0080
+                    SMTO_ABORTIFHUNG = 0x0002
+                    hicon_big = ctypes.windll.user32.LoadImageW(None, ico_path, IMAGE_ICON, 32, 32, LR_LOADFROMFILE)
+                    hicon_small = ctypes.windll.user32.LoadImageW(None, ico_path, IMAGE_ICON, 16, 16, LR_LOADFROMFILE)
+                    result = ctypes.c_ulonglong()
+                    if hicon_big:
+                        ctypes.windll.user32.SendMessageTimeoutW(hwnd, WM_SETICON, 1, hicon_big, SMTO_ABORTIFHUNG, 200, ctypes.byref(result))
+                    if hicon_small:
+                        ctypes.windll.user32.SendMessageTimeoutW(hwnd, WM_SETICON, 0, hicon_small, SMTO_ABORTIFHUNG, 200, ctypes.byref(result))
+                    break
+        except Exception:
+            pass
+
+
 def main():
     api       = FetchlyAPI()
     html_path = _resource_path("fetchly.html")
@@ -468,4 +495,5 @@ def main():
     )
     api.window = window
 
+    threading.Thread(target=_apply_window_icon, daemon=True).start()
     webview.start(debug=False)

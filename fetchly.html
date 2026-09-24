@@ -1849,16 +1849,60 @@
       <div class="rb-spacer"></div>
       <div class="rb-divider"></div>
 
-      <div class="rb" id="rb-2" data-tip="Preferences" onclick="switchView(2)">
+      <div class="rb" id="rb-2" data-tip="Preferences" onclick="switchView(2)" style="position:relative">
         <div class="rb-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </div>
         <span class="rb-lbl">Settings</span>
+        <div id="settingsUpdDot" class="upd-dot" style="display:none"></div>
       </div>
     </nav>
 
     <!-- ══════ MAIN ══════ -->
     <div id="main">
+
+      <!-- ════ UPDATE NOTIFICATION BAR REMINDER ════ -->
+      <div id="updateNotificationBar" class="update-notif-bar hidden" style="display:none">
+        <div class="unb-glow-line"></div>
+        <div class="unb-left">
+          <div class="unb-badge">
+            <span class="unb-badge-dot"></span>
+            <span>Update Ready</span>
+          </div>
+          <div class="unb-text">
+            <strong>Fetchly <span id="unbVersion">v1.0.1</span></strong> is available
+            <span class="unb-changelog-snip" id="unbSnip">— New performance upgrades available</span>
+          </div>
+        </div>
+
+        <!-- Inline Progress Bar during Download -->
+        <div class="unb-progress-wrap" id="unbProgressWrap">
+          <div class="unb-progress-bar">
+            <div class="unb-progress-fill" id="unbProgressFill"></div>
+          </div>
+          <div class="unb-progress-text" id="unbProgressText">Updating…</div>
+        </div>
+
+        <div class="unb-right" id="unbActionButtons">
+          <button class="unb-btn unb-btn-primary" id="unbUpdateBtn" onclick="installFetchlyUpdateFromBar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Update Now</span>
+          </button>
+          <button class="unb-btn unb-btn-secondary" onclick="openFetchlyUpdateDetails()">
+            What's New
+          </button>
+          <button class="unb-close-btn" onclick="dismissUpdateNotificationBar()" title="Remind me later">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <!-- TOPBAR -->
       <header id="topbar">
@@ -2083,8 +2127,16 @@
           </div>
           <div class="cfg-section">System</div>
           <div class="ver-row" id="updateRow">
-            <div><div class="ver-name">Fetchly</div><div class="ver-sub">yt-dlp · pywebview · Desktop</div></div>
-            <div class="ver-tag" id="verTag">v6.0.0</div>
+            <div>
+              <div class="ver-name">Fetchly <span class="ver-tag-inline" id="settingsVerTag">v1.0.0</span></div>
+              <div class="ver-sub" id="settingsUpdateStatus">yt-dlp 2026.8.19 · pywebview · Desktop</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="unb-btn unb-btn-secondary" id="btnManualCheckUpdate" onclick="manualCheckUpdates(event)" style="height:30px;font-size:11px;gap:6px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span id="btnCheckUpdateText">Check Updates</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2330,7 +2382,7 @@
       </div>
 
       <!-- Text -->
-      <div class="upd-eyebrow" style="color:#7C6BFF">FETCHLY UPDATE AVAILABLE</div>
+      <div class="upd-eyebrow" style="color:#FFE873">FETCHLY UPDATE AVAILABLE</div>
       <div class="upd-title">v<span id="fUpdLatestVer">—</span> is ready</div>
       <div class="upd-body" id="fUpdBody">A new version of Fetchly is available. Update now to get the latest features and improvements.</div>
 
@@ -2343,12 +2395,12 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.8" stroke-linecap="round" style="width:14px;height:14px;flex-shrink:0">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
-        <div class="upd-ver-chip" style="background:rgba(124,107,255,0.12);border:1px solid rgba(124,107,255,0.28)"><span class="upd-ver-lbl">Latest</span><span id="fUpdLatestVerChip" style="color:#b8adff">—</span></div>
+        <div class="upd-ver-chip" style="background:rgba(212,175,55,0.14);border:1px solid rgba(212,175,55,0.35)"><span class="upd-ver-lbl">Latest</span><span id="fUpdLatestVerChip" style="color:#FFE873">—</span></div>
       </div>
 
       <!-- Progress bar -->
       <div class="upd-progress" id="fUpdProgress" style="display:none">
-        <div class="upd-prog-track"><div class="upd-prog-fill" id="fUpdProgFill" style="background:linear-gradient(90deg,#7C6BFF,#b8adff)"></div></div>
+        <div class="upd-prog-track"><div class="upd-prog-fill" id="fUpdProgFill" style="background:linear-gradient(90deg,#D4AF37,#FFE873)"></div></div>
         <div class="upd-prog-label" id="fUpdProgLabel">Preparing update…</div>
       </div>
 
@@ -2368,6 +2420,211 @@
   </div>
 
   <style>
+    /* ══ UPDATE NOTIFICATION BAR REMINDER ══ */
+    .update-notif-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 48px;
+      background: linear-gradient(90deg, rgba(16, 17, 24, 0.98) 0%, rgba(26, 23, 14, 0.98) 50%, rgba(16, 17, 24, 0.98) 100%);
+      border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 232, 115, 0.15);
+      position: relative;
+      z-index: 100;
+      flex-shrink: 0;
+      transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      will-change: height, opacity, transform;
+    }
+    .update-notif-bar.hidden {
+      height: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      opacity: 0 !important;
+      border-bottom-color: transparent !important;
+      pointer-events: none !important;
+      transform: translateY(-8px);
+    }
+    .unb-glow-line {
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1.5px;
+      background: linear-gradient(90deg, transparent 0%, #D4AF37 30%, #FFE873 50%, #D4AF37 70%, transparent 100%);
+      opacity: 0.85;
+      animation: unbGlowPulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes unbGlowPulse {
+      0% { opacity: 0.45; }
+      100% { opacity: 1; }
+    }
+    .unb-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .unb-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(212, 175, 55, 0.14);
+      border: 1px solid rgba(212, 175, 55, 0.38);
+      color: #FFE873;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-family: var(--mono, monospace);
+      flex-shrink: 0;
+    }
+    .unb-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #FFE873;
+      box-shadow: 0 0 8px #FFE873;
+      animation: unbPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes unbPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+    .unb-text {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.88);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .unb-text strong {
+      color: #fff;
+      font-weight: 600;
+    }
+    .unb-changelog-snip {
+      color: rgba(255, 255, 255, 0.48);
+      margin-left: 6px;
+      font-size: 11.5px;
+    }
+    .unb-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .unb-btn {
+      height: 30px;
+      padding: 0 13px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      outline: none;
+      font-family: inherit;
+    }
+    .unb-btn-primary {
+      background: linear-gradient(135deg, #FFE873 0%, #D4AF37 50%, #B8860B 100%);
+      color: #0b0c10;
+      border: none;
+      box-shadow: 0 2px 10px rgba(212, 175, 55, 0.35);
+    }
+    .unb-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.5);
+      filter: brightness(1.08);
+    }
+    .unb-btn-primary:active {
+      transform: translateY(0);
+    }
+    .unb-btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .unb-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .unb-close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      padding: 0;
+    }
+    .unb-close-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .unb-close-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    /* Inline progress inside bar */
+    .unb-progress-wrap {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      max-width: 480px;
+    }
+    .unb-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .unb-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #D4AF37, #FFE873);
+      transition: width 0.2s ease;
+    }
+    .unb-progress-text {
+      font-size: 11px;
+      font-family: var(--mono, monospace);
+      color: #FFE873;
+      min-width: 120px;
+      white-space: nowrap;
+    }
+    .upd-dot {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #FFE873;
+      box-shadow: 0 0 8px #D4AF37;
+      animation: unbPulse 2s infinite ease-in-out;
+    }
+    .ver-tag-inline {
+      display: inline-block;
+      font-family: var(--mono, monospace);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: #FFE873;
+      margin-left: 6px;
+    }
+
     /* ══ FETCHLY APP UPDATE POPUP ══ */
     #fetchlyUpdatePopup {
       position: fixed; inset: 0; z-index: 10001;
@@ -2378,57 +2635,57 @@
       position: relative; z-index: 1;
       width: 440px; max-width: calc(100vw - 40px);
       background: #0a0b12;
-      border: 1px solid rgba(124,107,255,0.22);
+      border: 1px solid rgba(212,175,55,0.28);
       border-radius: 24px;
       padding: 36px 32px 28px;
       display: flex; flex-direction: column; align-items: center;
       gap: 0; text-align: center;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(124,107,255,0.06) inset;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.88), 0 0 0 1px rgba(212,175,55,0.08) inset;
       animation: upd-slide-in .38s cubic-bezier(.22,1,.36,1) both;
       overflow: hidden;
     }
     .fupd-card::before {
       content: '';
-      position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
-      background: linear-gradient(90deg, transparent, #7C6BFF, #b8adff, #7C6BFF, transparent);
+      position: absolute; top: 0; left: 15%; right: 15%; height: 1.5px;
+      background: linear-gradient(90deg, transparent, #D4AF37, #FFE873, #D4AF37, transparent);
     }
     .fupd-glow {
       position: absolute; top: -60px; left: 50%;
       transform: translateX(-50%);
       width: 320px; height: 220px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(124,107,255,0.12) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(212,175,55,0.14) 0%, transparent 70%);
       pointer-events: none;
     }
     .fupd-icon {
       width: 64px; height: 64px; border-radius: 20px;
-      background: rgba(124,107,255,0.14);
-      border: 1px solid rgba(124,107,255,0.32);
+      background: rgba(212,175,55,0.12);
+      border: 1px solid rgba(212,175,55,0.36);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 8px rgba(124,107,255,0.06), 0 0 0 16px rgba(124,107,255,0.02);
+      box-shadow: 0 0 0 8px rgba(212,175,55,0.06), 0 0 0 16px rgba(212,175,55,0.02);
     }
-    .fupd-icon svg { width: 26px; height: 26px; stroke: #7C6BFF; }
+    .fupd-icon svg { width: 26px; height: 26px; stroke: #FFE873; }
     .fupd-changelog {
       width: 100%; padding: 10px 14px; margin-bottom: 20px;
-      background: rgba(124,107,255,0.07);
-      border: 1px solid rgba(124,107,255,0.14);
+      background: rgba(212,175,55,0.07);
+      border: 1px solid rgba(212,175,55,0.18);
       border-radius: 10px;
-      font-size: 11.5px; color: rgba(255,255,255,0.45);
+      font-size: 11.5px; color: rgba(255,255,255,0.65);
       line-height: 1.6; text-align: left;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: inherit;
       display: none;
     }
     .fupd-changelog.visible { display: block; }
     .fupd-btn-primary {
       display: flex; align-items: center; gap: 8px;
       padding: 13px 24px; border-radius: 12px; border: none;
-      background: linear-gradient(180deg, #7C6BFF 0%, #5a4bcc 100%);
-      color: #fff; font-size: 14px; font-weight: 600;
+      background: linear-gradient(135deg, #FFE873 0%, #D4AF37 50%, #B8860B 100%);
+      color: #0b0c10; font-size: 14px; font-weight: 700;
       cursor: pointer; letter-spacing: -0.01em;
-      box-shadow: 0 4px 20px rgba(124,107,255,0.40);
+      box-shadow: 0 4px 20px rgba(212,175,55,0.40);
       transition: opacity .15s, transform .15s;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: inherit;
     }
-    .fupd-btn-primary:hover:not(:disabled) { opacity:.9; transform:translateY(-1px); }
+    .fupd-btn-primary:hover:not(:disabled) { opacity:.92; transform:translateY(-1px); box-shadow: 0 6px 24px rgba(212,175,55,0.55); }
     .fupd-btn-primary:disabled { opacity:.5; cursor:not-allowed; }
   </style>
 
@@ -2736,31 +2993,155 @@
       }).catch(() => {}); // silent fail — update check is non-critical
     }
 
-    /* ── Fetchly App Auto-Update ───────────────────────────── */
+    /* ── Fetchly App Auto-Update & Notification Bar ───────── */
+    let _currentFetchlyUpdate = null;
+
+    function showUpdateNotificationBar(res) {
+      if (!res) return;
+      _currentFetchlyUpdate = res;
+
+      const bar = id('updateNotificationBar');
+      if (!bar) return;
+
+      const ver = res.latest_version || '1.0.1';
+      const verStr = ver.startsWith('v') ? ver : 'v' + ver;
+      if (id('unbVersion')) id('unbVersion').textContent = verStr;
+
+      if (id('unbSnip')) {
+        if (res.changelog) {
+          const shortCl = res.changelog.replace(/[\r\n]+/g, ' ').trim();
+          id('unbSnip').textContent = '— ' + (shortCl.length > 55 ? shortCl.slice(0, 55) + '…' : shortCl);
+        } else {
+          id('unbSnip').textContent = '— Performance upgrades & new features ready';
+        }
+      }
+
+      // Show reminder badge on Settings
+      const dot = id('settingsUpdDot');
+      if (dot) dot.style.display = 'block';
+
+      const stStatus = id('settingsUpdateStatus');
+      if (stStatus) {
+        stStatus.textContent = `New update available: ${verStr}`;
+        stStatus.style.color = '#FFE873';
+      }
+
+      bar.style.display = 'flex';
+      requestAnimationFrame(() => {
+        bar.classList.remove('hidden');
+      });
+    }
+
+    function dismissUpdateNotificationBar() {
+      const bar = id('updateNotificationBar');
+      if (!bar) return;
+      bar.classList.add('hidden');
+      setTimeout(() => {
+        bar.style.display = 'none';
+      }, 340);
+
+      // Save dismissed state for session
+      try {
+        const v = _currentFetchlyUpdate?.latest_version;
+        if (v) sessionStorage.setItem('fetchly_upd_bar_dismissed', v);
+      } catch(e) {}
+
+      // Keep reminder dot on settings icon
+      const dot = id('settingsUpdDot');
+      if (dot) dot.style.display = 'block';
+      showToast('Update reminder kept in Settings', 'info');
+    }
+
+    function openFetchlyUpdateDetails() {
+      if (!_currentFetchlyUpdate) return;
+      const res = _currentFetchlyUpdate;
+
+      id('fUpdCurrentVer').textContent    = res.current_version  || '1.0.0';
+      id('fUpdLatestVer').textContent     = res.latest_version   || '—';
+      id('fUpdLatestVerChip').textContent = res.latest_version   || '—';
+
+      if (res.changelog) {
+        const cl = id('fUpdChangelog');
+        cl.textContent = '📝 ' + res.changelog;
+        cl.classList.add('visible');
+      }
+
+      const popup = id('fetchlyUpdatePopup');
+      popup.style.display = 'flex';
+      requestAnimationFrame(() => popup.classList.add('open'));
+    }
+
+    function installFetchlyUpdateFromBar() {
+      const actions = id('unbActionButtons');
+      const progWrap = id('unbProgressWrap');
+      if (actions) actions.style.display = 'none';
+      if (progWrap) progWrap.style.display = 'flex';
+      if (id('unbProgressText')) id('unbProgressText').textContent = 'Starting download…';
+
+      installFetchlyUpdate();
+    }
+
+    function manualCheckUpdates(e) {
+      if (e) e.stopPropagation();
+      const btnText = id('btnCheckUpdateText');
+      if (btnText) btnText.textContent = 'Checking…';
+      showToast('Checking for updates…', 'info');
+
+      if (!window.pywebview?.api?.check_fetchly_update) {
+        setTimeout(() => {
+          if (btnText) btnText.textContent = 'Check Updates';
+          showToast("You're on the latest version of Fetchly (v1.0.0)", 'info');
+        }, 600);
+        return;
+      }
+
+      window.pywebview.api.check_fetchly_update().then(res => {
+        if (btnText) btnText.textContent = 'Check Updates';
+        if (res && res.update_available) {
+          showUpdateNotificationBar(res);
+          showToast(`Fetchly v${res.latest_version} is available!`, 'info');
+        } else {
+          showToast("You're on the latest version of Fetchly!", 'info');
+          const stStatus = id('settingsUpdateStatus');
+          if (stStatus) {
+            stStatus.textContent = 'Up to date · yt-dlp 2026.8.19 · Desktop';
+            stStatus.style.color = '';
+          }
+        }
+      }).catch(() => {
+        if (btnText) btnText.textContent = 'Check Updates';
+        showToast("You're on the latest version of Fetchly!", 'info');
+      });
+    }
+
+    // Expose for testing
+    window.showTestUpdateBar = function(ver = '1.0.1', notes = 'Enhanced 4K/8K downloading speed and updated YouTube decipher algorithms.') {
+      showUpdateNotificationBar({
+        update_available: true,
+        current_version: '1.0.0',
+        latest_version: ver,
+        changelog: notes
+      });
+    };
+
     function checkFetchlyUpdate() {
       if (!window.pywebview?.api?.check_fetchly_update) return;
       window.pywebview.api.check_fetchly_update().then(res => {
         if (!res || res.status !== 'ok') return;
         if (!res.update_available) return;
 
-        // Don't show if user already dismissed this version
+        // Check if dismissed in this session
         try {
-          if (sessionStorage.getItem('fetchly_upd_dismissed') === res.latest_version) return;
+          if (sessionStorage.getItem('fetchly_upd_bar_dismissed') === res.latest_version) {
+            // Still show dot on Settings
+            const dot = id('settingsUpdDot');
+            if (dot) dot.style.display = 'block';
+            return;
+          }
         } catch(e) {}
 
-        id('fUpdCurrentVer').textContent    = res.current_version  || '—';
-        id('fUpdLatestVer').textContent     = res.latest_version   || '—';
-        id('fUpdLatestVerChip').textContent = res.latest_version   || '—';
-
-        if (res.changelog) {
-          const cl = id('fUpdChangelog');
-          cl.textContent = '📝 ' + res.changelog;
-          cl.classList.add('visible');
-        }
-
-        const popup = id('fetchlyUpdatePopup');
-        popup.style.display = 'flex';
-        requestAnimationFrame(() => popup.classList.add('open'));
+        // Show the top notification bar reminder!
+        showUpdateNotificationBar(res);
       }).catch(() => {});
     }
 
@@ -2769,7 +3150,7 @@
       const card  = id('fetchlyUpdCard');
       try {
         const v = id('fUpdLatestVer')?.textContent;
-        if (v && v !== '—') sessionStorage.setItem('fetchly_upd_dismissed', v);
+        if (v && v !== '—') sessionStorage.setItem('fetchly_upd_bar_dismissed', v);
       } catch(e) {}
       if (card) {
         card.style.transition = 'opacity .2s ease, transform .22s ease';
@@ -2782,23 +3163,38 @@
     function installFetchlyUpdate() {
       if (!window.pywebview?.api?.install_fetchly_update) return;
 
-      const btn   = id('fUpdNowBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spin" style="font-size:15px">&#8635;</span> Updating…';
-      id('fUpdActions').querySelector('.upd-btn-secondary').style.display = 'none';
-      id('fUpdProgress').style.display = 'block';
-      id('fUpdBody').textContent = 'Downloading update from GitHub…';
+      const btn = id('fUpdNowBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin" style="font-size:15px">&#8635;</span> Updating…';
+      }
+      const actions = id('fUpdActions');
+      if (actions) {
+        const sec = actions.querySelector('.upd-btn-secondary');
+        if (sec) sec.style.display = 'none';
+      }
+      const prog = id('fUpdProgress');
+      if (prog) prog.style.display = 'block';
+      const body = id('fUpdBody');
+      if (body) body.textContent = 'Downloading update from GitHub…';
 
       window.pywebview.api.install_fetchly_update().catch(() => onFetchlyUpdateDone(false));
     }
 
     /* Called from Python bridge: onFetchlyUpdateProgress(pct, msg) */
     function onFetchlyUpdateProgress(pct, msg) {
+      // Modal update
       const fill  = id('fUpdProgFill');
       const label = id('fUpdProgLabel');
       if (fill)  fill.style.width   = Math.max(0, Math.min(100, pct)) + '%';
       if (label) label.textContent  = msg || 'Updating…';
-      if (pct >= 100) id('fUpdBody').textContent = 'Restarting Fetchly…';
+      if (pct >= 100 && id('fUpdBody')) id('fUpdBody').textContent = 'Restarting Fetchly…';
+
+      // Bar inline update
+      const bFill = id('unbProgressFill');
+      const bText = id('unbProgressText');
+      if (bFill) bFill.style.width  = Math.max(0, Math.min(100, pct)) + '%';
+      if (bText) bText.textContent  = msg ? `${pct}% · ${msg}` : `${pct}%`;
     }
 
     /* Called from Python bridge: onFetchlyUpdateDone(success) */
@@ -2811,16 +3207,33 @@
           ? 'linear-gradient(90deg,#30D158,#4ADE80)'
           : 'linear-gradient(90deg,#FF453A,#FF6B6B)';
       }
+      const bText = id('unbProgressText');
+      const bFill = id('unbProgressFill');
+
       if (success) {
         if (label) { label.textContent = 'Restarting Fetchly…'; label.style.color = '#30D158'; }
-        id('fUpdBody').textContent = 'Update installed! Fetchly will restart automatically.';
+        if (id('fUpdBody')) id('fUpdBody').textContent = 'Update installed! Fetchly will restart automatically.';
+        if (bText) bText.textContent = 'Restarting Fetchly…';
+        if (bFill) {
+          bFill.style.width = '100%';
+          bFill.style.background = 'linear-gradient(90deg,#30D158,#4ADE80)';
+        }
         showToast('Fetchly updated! Restarting…', 'info');
       } else {
         if (label) { label.textContent = 'Update failed. Try again later.'; label.style.color = '#FF453A'; }
         const btn = id('fUpdNowBtn');
-        btn.disabled = false; btn.innerHTML = 'Retry';
-        btn.onclick = () => installFetchlyUpdate();
-        id('fUpdActions').querySelector('.upd-btn-secondary').style.display = '';
+        if (btn) {
+          btn.disabled = false; btn.innerHTML = 'Retry';
+          btn.onclick = () => installFetchlyUpdate();
+        }
+        const actions = id('fUpdActions');
+        if (actions) {
+          const sec = actions.querySelector('.upd-btn-secondary');
+          if (sec) sec.style.display = '';
+        }
+        if (bText) bText.textContent = 'Update failed';
+        const barActions = id('unbActionButtons');
+        if (barActions) barActions.style.display = 'flex';
         showToast('Fetchly update failed', 'error');
       }
     }

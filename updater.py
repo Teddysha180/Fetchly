@@ -198,9 +198,17 @@ class FetchlyUpdater:
                 pass
 
         if success:
-            # Give the UI 1.5 s to show the "Restarting…" state, then restart
-            time.sleep(1.5)
-            _restart_app()
+            if msg == "__INSTALLER_LAUNCHED__":
+                # The NSIS installer was launched and will restart Fetchly after updating files.
+                # Just exit cleanly so file locks are released.
+                time.sleep(1.0)
+                os._exit(0)
+            elif msg == "__OPEN_BROWSER__":
+                pass
+            else:
+                # Give the UI 1.5 s to show the "Restarting…" state, then restart
+                time.sleep(1.5)
+                _restart_app()
 
     def _do_install(self) -> tuple[bool, str]:
         """
@@ -278,19 +286,30 @@ class FetchlyUpdater:
 
         self._progress(92, "Launching installer…")
         try:
-            import subprocess
-            # /S = silent install, /D= sets install dir to current location
             install_dir = str(Path(sys.executable).parent.resolve()) if getattr(sys, 'frozen', False) else ""
-            args = [str(exe_path), "/S"]
+            params = "/S"
             if install_dir:
-                args += [f"/D={install_dir}"]
-            subprocess.Popen(args, close_fds=True)
+                params += f' /D="{install_dir}"'
+
+            if sys.platform == "win32":
+                import ctypes
+                # Use ShellExecuteW 'runas' so UAC elevation is granted for Program Files
+                res = ctypes.windll.shell32.ShellExecuteW(
+                    None, "runas", str(exe_path), params, None, 1
+                )
+                if res <= 32:
+                    # Fallback to subprocess if ShellExecute returned error
+                    import subprocess
+                    subprocess.Popen([str(exe_path), "/S"] + ([f"/D={install_dir}"] if install_dir else []), close_fds=True)
+            else:
+                import subprocess
+                subprocess.Popen([str(exe_path), "/S"], close_fds=True)
         except Exception as e:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             return False, f"Could not launch installer: {e}"
 
-        self._progress(100, "Installer launched! Closing Fetchly…")
-        return True, "Update installed successfully."
+        self._progress(100, "Installer launched! Updating Fetchly…")
+        return True, "__INSTALLER_LAUNCHED__"
 
     # ── Strategy C: ZIP-based file copy (dev mode) ────────────────────────
     def _install_via_zip(self, install_root: Path) -> tuple[bool, str]:
