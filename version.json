@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
-  "release_date": "2026-09-23",
-  "changelog": "Initial Fetchly release — renamed from MediaVault, organized project structure."
+  "version": "1.0.1",
+  "release_date": "2026-09-24",
+  "changelog": "Update notification system, improved YouTube compatibility, luxury gold UI theme."
 }
