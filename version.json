@@ -1,5 +1,6 @@
 {
   "version": "1.0.1",
   "release_date": "2026-09-24",
-  "changelog": "Update notification system, improved YouTube compatibility, luxury gold UI theme."
+  "changelog": "Update notification system, improved YouTube compatibility, luxury gold UI theme.",
+  "installer_url": "https://github.com/Teddysha180/Fetchly/releases/download/v1.0.1/Fetchly-Setup-1.0.0.exe"
 }

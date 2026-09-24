@@ -43,6 +43,9 @@ ZIP_URL = (
     f"/archive/refs/heads/{BRANCH}.zip"
 )
 
+# GitHub Releases page — opened if installer download not available
+RELEASES_URL = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
+
 # Files/folders the updater will NEVER overwrite (user data / platform assets)
 SKIP_PATHS = {
     "logo/bg.png",
@@ -200,11 +203,98 @@ class FetchlyUpdater:
             _restart_app()
 
     def _do_install(self) -> tuple[bool, str]:
-        install_root = Path(__file__).parent.resolve()
+        """
+        Smart update strategy:
+        1. Check if version.json on GitHub lists an installer_url.
+        2. If yes  → download the .exe installer and run it silently.
+        3. If no   → download the source ZIP and copy changed source files
+                     next to the EXE (works in dev mode; graceful fallback
+                     in frozen mode — opens Releases page instead).
+        """
+        is_frozen = getattr(sys, 'frozen', False)
 
-        # ── Step 1: Download ZIP ──────────────────────────────────────────
+        # The directory that actually contains Fetchly.exe (or main.py in dev)
+        if is_frozen:
+            install_root = Path(sys.executable).parent.resolve()
+        else:
+            install_root = Path(__file__).parent.resolve()
+
+        # ── Step 1: Fetch version.json to get installer_url (if any) ─────
         self._progress(5, "Connecting to GitHub…")
+        installer_url: str | None = None
+        try:
+            req = urllib.request.Request(
+                RAW_VERSION_URL,
+                headers={"Cache-Control": "no-cache", "User-Agent": "Fetchly-Updater/1"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            installer_url = data.get("installer_url") or None
+        except Exception:
+            pass  # non-fatal — fall through to ZIP method
 
+        # ── Strategy A: Installer EXE available ───────────────────────────
+        if installer_url:
+            return self._install_via_installer(installer_url)
+
+        # ── Strategy B: Frozen EXE but no installer — open Releases page ──
+        if is_frozen:
+            self._progress(100, "Opening GitHub Releases…")
+            try:
+                import webbrowser
+                webbrowser.open(RELEASES_URL)
+            except Exception:
+                pass
+            # Signal success so the UI shows a friendly message
+            return True, "__OPEN_BROWSER__"
+
+        # ── Strategy C: Dev mode — copy source files from ZIP ─────────────
+        return self._install_via_zip(install_root)
+
+    # ── Strategy A: download + run NSIS installer silently ────────────────
+    def _install_via_installer(self, url: str) -> tuple[bool, str]:
+        self._progress(8, "Downloading installer…")
+        tmp_dir  = Path(tempfile.mkdtemp(prefix="fetchly_upd_"))
+        exe_path = tmp_dir / "Fetchly-Setup.exe"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Fetchly-Updater/1"})
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                total = int(resp.headers.get("Content-Length", 0))
+                downloaded = 0
+                chunk = 65536
+                with open(exe_path, "wb") as f:
+                    while True:
+                        buf = resp.read(chunk)
+                        if not buf:
+                            break
+                        f.write(buf)
+                        downloaded += len(buf)
+                        if total:
+                            pct = 8 + int((downloaded / total) * 82)  # 8→90
+                            self._progress(pct, f"Downloading… {downloaded // 1024} KB / {total // 1024} KB")
+        except Exception as e:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return False, f"Installer download failed: {e}"
+
+        self._progress(92, "Launching installer…")
+        try:
+            import subprocess
+            # /S = silent install, /D= sets install dir to current location
+            install_dir = str(Path(sys.executable).parent.resolve()) if getattr(sys, 'frozen', False) else ""
+            args = [str(exe_path), "/S"]
+            if install_dir:
+                args += [f"/D={install_dir}"]
+            subprocess.Popen(args, close_fds=True)
+        except Exception as e:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return False, f"Could not launch installer: {e}"
+
+        self._progress(100, "Installer launched! Closing Fetchly…")
+        return True, "Update installed successfully."
+
+    # ── Strategy C: ZIP-based file copy (dev mode) ────────────────────────
+    def _install_via_zip(self, install_root: Path) -> tuple[bool, str]:
+        self._progress(5, "Connecting to GitHub…")
         tmp_dir  = Path(tempfile.mkdtemp(prefix="fetchly_upd_"))
         zip_path = tmp_dir / "fetchly_update.zip"
 
@@ -218,7 +308,6 @@ class FetchlyUpdater:
                 downloaded = 0
                 chunk = 65536
                 self._progress(8, "Downloading update…")
-
                 with open(zip_path, "wb") as f:
                     while True:
                         buf = resp.read(chunk)
@@ -227,16 +316,13 @@ class FetchlyUpdater:
                         f.write(buf)
                         downloaded += len(buf)
                         if total:
-                            pct = 8 + int((downloaded / total) * 52)  # 8 → 60
+                            pct = 8 + int((downloaded / total) * 52)  # 8→60
                             self._progress(pct, f"Downloading… {downloaded // 1024} KB")
-
         except Exception as e:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             return False, f"Download failed: {e}"
 
-        # ── Step 2: Extract ZIP ───────────────────────────────────────────
         self._progress(62, "Extracting update…")
-
         extract_dir = tmp_dir / "extracted"
         try:
             with zipfile.ZipFile(zip_path, "r") as zf:
@@ -245,16 +331,13 @@ class FetchlyUpdater:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             return False, f"Extraction failed: {e}"
 
-        # GitHub ZIPs contain a top-level folder like "Fetchly-master/"
         candidates = list(extract_dir.iterdir())
         if not candidates:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             return False, "Archive was empty."
-        source_root = candidates[0]  # e.g. extract_dir/Fetchly-master/
+        source_root = candidates[0]
 
-        # ── Step 3: Copy files ────────────────────────────────────────────
         self._progress(70, "Installing files…")
-
         _copy_update(source_root, install_root)
 
         self._progress(95, "Cleaning up…")
